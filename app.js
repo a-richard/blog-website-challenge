@@ -3,7 +3,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const mongoose = require('mongoose');
-const _ = require('lodash');
 
 const homeStartingContent =
   'Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.';
@@ -38,7 +37,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 const postSchema = new mongoose.Schema({
   title: String,
   body: String,
-  link: String,
 });
 const Post = mongoose.model('Post', postSchema);
 
@@ -65,16 +63,15 @@ app.post('/compose', (req, res) => {
   const post = new Post({
     title: postTitle,
     body: postBody,
-    link: _.kebabCase(postTitle),
   });
   post.save(() => {
     res.redirect('/');
   });
 });
 
-app.get('/posts/:postLink', (req, res) => {
-  const requestedPost = req.params.postLink;
-  Post.findOne({ link: requestedPost }, (err, post) => {
+app.get('/posts/:postID', (req, res) => {
+  const requestedPostID = req.params.postID;
+  Post.findOne({ _id: requestedPostID }, (err, post) => {
     if (post) {
       res.render('post', { post });
     } else {
