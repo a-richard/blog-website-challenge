@@ -1,6 +1,8 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const mongoose = require('mongoose');
 const _ = require('lodash');
 
 const homeStartingContent =
@@ -12,15 +14,38 @@ const contactContent =
 
 const app = express();
 
+const { PASSWORD: password } = process.env;
+
+mongoose.connect(
+  `mongodb+srv://arichard:${password}@todolist.blvz3.mongodb.net/todolistDB?retryWrites=true&w=majority`,
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
+);
+
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', () => {
+  console.log('Connected to DB successfully');
+});
+
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const posts = [];
+const postSchema = new mongoose.Schema({
+  title: String,
+  body: String,
+  link: String,
+});
+const Post = mongoose.model('Post', postSchema);
 
 app.get('/', (req, res) => {
-  res.render('home', { homeStartingContent, posts });
+  Post.find({}, (err, posts) => {
+    res.render('home', { homeStartingContent, posts });
+  });
 });
 
 app.get('/about', (req, res) => {
@@ -36,25 +61,26 @@ app.get('/compose', (req, res) => {
 });
 
 app.post('/compose', (req, res) => {
-  const post = {
-    title: req.body.postTitle,
-    body: req.body.postBody,
-  };
-  posts.push(post);
-  res.redirect('/');
+  const { postTitle, postBody } = req.body;
+  const post = new Post({
+    title: postTitle,
+    body: postBody,
+    link: _.kebabCase(postTitle),
+  });
+  post.save(() => {
+    res.redirect('/');
+  });
 });
 
-app.get('/posts/:postTitle', (req, res) => {
-  const requestedTitle = _.lowerCase(req.params.postTitle);
-  let found = false;
-  posts.forEach((post) => {
-    const storedTitle = _.lowerCase(post.title);
-    if (requestedTitle === storedTitle) {
-      found = true;
+app.get('/posts/:postLink', (req, res) => {
+  const requestedPost = req.params.postLink;
+  Post.findOne({ link: requestedPost }, (err, post) => {
+    if (post) {
       res.render('post', { post });
+    } else {
+      res.redirect('/');
     }
   });
-  if (!found) res.sendStatus(404);
 });
 
 app.listen(3000, () => {

@@ -2,14 +2,38 @@
 <h1>Compose</h1>
 <form action="/compose" method="post">
   <label for="postTitle">Title</label>
-  <input type="text" class="form-control" name="postTitle" id="postTitle" />
+  <input
+    type="text"
+    class="form-control input"
+    name="postTitle"
+    id="postTitle"
+  />
   <label for="postBody">Post</label>
   <textarea
-    class="form-control"
+    class="form-control input"
     name="postBody"
     id="postBody"
     rows="5"
   ></textarea>
-  <button type="submit" class="btn btn-primary formSubmit">Publish</button>
+  <button
+    type="submit"
+    id="formButton"
+    class="btn btn-primary formSubmit"
+    disabled
+  >
+    Publish
+  </button>
 </form>
+<script>
+  const postTitle = document.querySelector('#postTitle');
+  const postBody = document.querySelector('#postBody');
+  const inputs = document.querySelectorAll('.input');
+  const button = document.querySelector('#formButton');
+  inputs.forEach((input) => {
+    input.onkeyup = () => {
+      if (postTitle.value && postBody.value) button.removeAttribute('disabled');
+      else button.setAttribute('disabled', '');
+    };
+  });
+</script>
 <%- include('partials/footer'); -%>
